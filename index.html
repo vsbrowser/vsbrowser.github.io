@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VSBrowser – Trình duyệt Portable</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Khung cửa sổ trình duyệt (chuẩn phong cách VBrowser) -->
+  <div class="browser-window">
+    
+    <!-- 1. Thanh tiêu đề & Thanh Tab (Tabs Bar) -->
+    <header class="window-header">
+      <div class="tabs-container">
+        <div class="tabs-list" id="tabsList">
+          <!-- Các Tab sẽ được sinh tự động bằng JS (gồm các tab ghim + tab mới như ảnh 2) -->
+        </div>
+        <button class="new-tab-btn" id="btnNewTab" title="Mở tab mới (Ctrl+T)">+</button>
+      </div>
+
+      <div class="window-controls">
+        <span class="win-btn win-min" title="Thu nhỏ">─</span>
+        <span class="win-btn win-max" title="Phóng to">□</span>
+        <span class="win-btn win-close" title="Đóng">✕</span>
+      </div>
+    </header>
+
+    <!-- 2. Thanh điều hướng & Công cụ (Navigation Toolbar) -->
+    <nav class="nav-toolbar">
+      <div class="nav-buttons">
+        <button class="tool-btn" id="btnBack" title="Lùi (Alt+Left)">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <button class="tool-btn" id="btnForward" title="Tới (Alt+Right)">
+          <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+        </button>
+        <button class="tool-btn" id="btnReload" title="Tải lại (F5)">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+        <button class="tool-btn" id="btnHome" title="Trang chủ (Alt+Home)">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </button>
+      </div>
+
+      <!-- Ô nhập địa chỉ URL thông minh -->
+      <div class="url-bar-container">
+        <span class="security-badge" id="secBadge" title="Bảo mật kết nối">🔒</span>
+        <input type="text" id="urlInput" class="url-input" placeholder="Nhập địa chỉ hoặc từ khóa tìm kiếm…" autocomplete="off" spellcheck="false">
+        <button class="clear-url-btn" id="btnClearUrl" title="Xóa">✕</button>
+      </div>
+
+      <!-- Các nút tính năng bên phải (khớp 100% Ảnh 2) -->
+      <div class="action-buttons">
+        <button class="action-btn" id="btnActionAdd" title="Tab mới">+</button>
+        <button class="action-btn" id="btnActionDownloads" title="Tải xuống (Ctrl+J)">↓</button>
+        <button class="action-btn" id="btnActionScripts" title="Tập lệnh Python (Ctrl+Shift+P)">&lt;&gt;</button>
+        <button class="action-btn" id="btnActionTheme" title="Giao diện & Chủ đề">🎨</button>
+        
+        <div class="shield-badge" id="shieldBadge" title="Số quảng cáo/tracker đã chặn">
+          🛡 <span id="shieldCount">10</span>
+        </div>
+
+        <button class="persona-pill-btn" id="btnPersona" title="Persona, Fingerprint & GeoIP (Apostate Engine)">
+          🎭 <span id="personaLabel">Win #998877</span>
+        </button>
+
+        <button class="auto-pill-btn" id="btnAuto" title="Bật/Tắt chế độ Automation & AI điều khiển">
+          🤖 <span id="autoLabel">Auto: TẮT</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- 3. Khu vực hiển thị trang (Main Viewport) -->
+    <main class="main-viewport" id="viewport">
+      
+      <!-- Giao diện Tab Mới (mặc định mở ra như ảnh 2) -->
+      <div class="newtab-page" id="newtabPage">
+        <div class="clock" id="clockDisplay">14:00</div>
+        <div class="greeting">Chào bạn 👋</div>
+        <form class="search-box" id="newtabSearchForm">
+          <input type="text" id="newtabSearchInput" placeholder="Tìm kiếm hoặc nhập địa chỉ" autofocus autocomplete="off">
+          <button type="submit">Tìm</button>
+        </form>
+        <div class="tip-text">Gõ tên miền để mở trực tiếp, hoặc từ khóa để tìm Google.</div>
+      </div>
+
+      <!-- Khung hiển thị nội dung Web khi điều hướng -->
+      <div class="web-content-frame" id="webFrameContainer" style="display:none;">
+        <iframe id="webIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="about:blank"></iframe>
+      </div>
+
+      <!-- Thanh trạng thái tải trang -->
+      <div class="loading-bar" id="loadingBar"></div>
+    </main>
+
+  </div>
+
+  <!-- 4. Panel bên phải: "Tập lệnh Python" (trượt ra khi bấm <>) -->
+  <aside class="scripts-drawer" id="scriptsDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span class="icon">📜</span>
+        <h3>Tập lệnh Python</h3>
+      </div>
+      <button class="drawer-close-btn" id="btnCloseScripts">✕</button>
+    </div>
+
+    <!-- Danh sách mẫu -->
+    <div class="drawer-body" id="drawerCardsView">
+      <div class="drawer-toolbar">
+        <input type="text" id="searchScripts" placeholder="🔍 Lọc tập lệnh…">
+        <button class="btn-primary" id="btnNewScript">+ Tập lệnh Mới</button>
+      </div>
+
+      <div class="scripts-cards-list" id="scriptsCardsList">
+        <!-- 15 mẫu tập lệnh Python được nạp tự động -->
+      </div>
+    </div>
+
+    <!-- Trình soạn thảo inline -->
+    <div class="drawer-editor-view" id="drawerEditorView" style="display:none;">
+      <div class="editor-top-bar">
+        <button class="btn-subtle" id="btnBackToList">← Danh sách</button>
+        <span class="editor-script-name" id="editorScriptName">01_Trich noi dung cho AI</span>
+        <button class="btn-primary" id="btnRunScript">▶ Chạy</button>
+      </div>
+      <textarea id="scriptCodeArea" spellcheck="false"></textarea>
+      <div class="console-header">Kết quả thực thi</div>
+      <pre class="console-output" id="scriptConsoleOutput">Kết quả chạy tập lệnh hiện ở đây…</pre>
+    </div>
+  </aside>
+
+  <!-- 5. Hộp thoại: "Persona & Fingerprint (Apostate Engine)" -->
+  <div class="modal-backdrop" id="personaModal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎭 Cấu hình Persona & Fingerprint (Apostate)</h3>
+        <button class="modal-close-btn" id="btnClosePersona">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nền tảng (Platform):</label>
+          <select id="selPlatform">
+            <option value="windows" selected>Windows 11 (Physical Ground Truth)</option>
+            <option value="macos">macOS Sequoia (Apple Silicon M4)</option>
+            <option value="linux">Linux Ubuntu (Intel/AMD)</option>
+            <option value="host">Máy thật (Host Direct)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hạt giống định danh (Seed):</label>
+          <div class="input-with-btn">
+            <input type="text" id="inputSeed" value="998877" placeholder="Nhập seed hoặc bấm Tạo mới">
+            <button class="btn-secondary" id="btnGenSeed">Tạo mới</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ngôn ngữ (Locale):</label>
+          <input type="text" id="inputLocale" value="vi-VN,vi,en-US,en">
+        </div>
+        <div class="form-group">
+          <label>Múi giờ (Timezone):</label>
+          <input type="text" id="inputTimezone" value="Asia/Ho_Chi_Minh">
+        </div>
+        <div class="form-group-checkbox">
+          <input type="checkbox" id="chkNoise" checked>
+          <label for="chkNoise">Bật nhiễu tất định Canvas / Audio / ClientRects (FNV-1a Rust)</label>
+        </div>
+        <div class="form-group">
+          <label>Proxy URL (HTTP/HTTPS/SOCKS5):</label>
+          <input type="text" id="inputProxy" placeholder="http://user:pass@ip:port">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btnOpenProbe">🔬 Mở Fingerprint Probe</button>
+        <button class="btn-primary" id="btnApplyPersona">Áp dụng Persona</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Hộp thoại: "Cài đặt Kết nối Cloud Backend" -->
+  <div class="modal-backdrop" id="backendModal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🤖 Cài đặt Automation & Backend Cloud</h3>
+        <button class="modal-close-btn" id="btnCloseBackend">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="help-text">Trang web này có thể hoạt động độc lập hoặc kết nối về máy chủ Hugging Face Space của bạn để điều khiển Chromium ngầm và AI:</p>
+        <div class="form-group">
+          <label>Hugging Face Space Backend URL:</label>
+          <input type="text" id="inputBackendUrl" value="https://ovcopenclaw-vbrowser.hf.space" placeholder="https://ovcopenclaw-vbrowser.hf.space">
+        </div>
+        <div class="form-group">
+          <label>Hoặc Local RPC URL:</label>
+          <input type="text" id="inputLocalRpcUrl" value="http://127.0.0.1:8765">
+        </div>
+        <div class="connection-status" id="backendStatusText">
+          Trạng thái: 🟢 Đã sẵn sàng giao diện VBrowser
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btnTestBackend">Kiểm tra kết nối</button>
+        <button class="btn-primary" id="btnSaveBackend">Lưu kết nối</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
