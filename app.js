@@ -46,7 +46,7 @@ const state = {
   tabs: [
     { id: 1, title: 'colab.research.g', url: 'https://colab.research.google.com', pinned: true, icon: '⚡' },
     { id: 2, title: 'github.com', url: 'https://github.com', pinned: true, icon: '🐙' },
-    { id: 3, title: 'huggingface.co', url: 'https://huggingface.co', pinned: true, icon: '🤗' },
+    { id: 3, title: '☁️ ZeroGPU Cloud', url: 'https://ovcopenclaw-vbrowser.hf.space?__theme=dark', pinned: true, icon: '🤗', isCloud: true },
     { id: 4, title: 'openrouter.ai', url: 'https://openrouter.ai', pinned: true, icon: '🔀' },
     { id: 5, title: 'build.nvidia.com', url: 'https://build.nvidia.com', pinned: true, icon: '👁️' },
     { id: 6, title: 'cloudflare.com', url: 'https://dash.cloudflare.com', pinned: true, icon: '☁️' },
@@ -346,41 +346,15 @@ function openInProxy(url) {
   webIframe.src = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
 }
 
-async function openInCloud(url) {
-  cloudViewport.style.display = 'flex';
-  cloudImg.style.display = 'none';
-  cloudLoading.style.display = 'flex';
-  cloudLoadingText.innerHTML = `Đang gửi lệnh tới Chromium Cloud ZeroGPU (${state.backend.hfUrl})...<br><span style="font-size:12px; color:#10b981;">Nvidia RTX Pro 6000 Blackwell</span>`;
+function openInCloud(url) {
+  webFrameContainer.style.display = 'block';
+  smartFallback.style.display = 'none';
+  cloudViewport.style.display = 'none';
+  newtabPage.style.display = 'none';
 
-  try {
-    const apiUrl = `${state.backend.hfUrl}/api/predict`;
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fn_index: 0, data: [url] })
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      if (data.data && data.data[0]) {
-        cloudImg.src = data.data[0];
-        cloudImg.style.display = 'block';
-        cloudLoading.style.display = 'none';
-        return;
-      }
-    }
-    throw new Error('Chờ xác thực Space');
-  } catch (err) {
-    cloudLoadingText.innerHTML = `
-      Chromium Cloud ZeroGPU đang chạy trên Space:
-      <br><br>
-      <a href="${state.backend.hfUrl}" target="_blank" style="color:#10b981; text-decoration:underline; font-weight:bold; font-size:14px;">
-        ${state.backend.hfUrl}
-      </a>
-      <br><br>
-      <button class="btn-fallback-primary" onclick="window.open('${url}', '_blank')">🌐 Mở trang này ra Tab mới</button>
-    `;
-  }
+  // Nhúng trực tiếp phiên làm việc Hugging Face Space ZeroGPU với theme tối
+  let targetSrc = `${state.backend.hfUrl}?__theme=dark`;
+  webIframe.src = targetSrc;
 }
 
 // Fallback Action Buttons
@@ -616,7 +590,16 @@ btnOpenProbe.addEventListener('click', () => {
 
 // --- 6. AUTOMATION & BACKEND MODAL ---
 btnAuto.addEventListener('click', () => {
-  backendModal.style.display = 'flex';
+  state.backend.isAutoOn = !state.backend.isAutoOn;
+  autoLabel.textContent = state.backend.isAutoOn ? 'Auto: BẬT 🟢' : 'Auto: TẮT';
+  
+  if (state.backend.isAutoOn) {
+    if (modeSelect) modeSelect.value = 'cloud';
+    switchTab(3); // Chuyển ngay sang tab ☁️ ZeroGPU Cloud
+  } else {
+    if (modeSelect) modeSelect.value = 'direct';
+    backendModal.style.display = 'flex';
+  }
 });
 
 btnCloseBackend.addEventListener('click', () => {
