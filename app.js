@@ -17,6 +17,30 @@ const TEMPLATES = {
   "15_Kiem thu Proxy song va Tuong tac GUI": "# MẪU 15 — Kiểm thử Proxy sống mạng ngoài & Tương tác cửa sổ GUI trực tiếp.\n#\n# Tập lệnh này thực hiện quy trình hoàn chỉnh:\n#   1) Dò GeoIP của Proxy sống (hoặc proxy người dùng chỉ định)\n#   2) Đồng bộ Ngôn ngữ, Múi giờ, và cấu hình Persona tương ứng\n#   3) Điều hướng cửa sổ GUI tới http://httpbin.org/headers kiểm tra Header\n#   4) Tương tác nhập dữ liệu form trên trang web và cuộn trang\n#   5) Chụp ảnh màn hình cửa sổ GUI lưu vào thư mục data/downloads\n#\n# Có thể chạy trực tiếp trong Panel Tập lệnh (nhấn [Chạy])\n# hoặc chạy từ dòng lệnh: python \"templates/15_Kiem thu Proxy song va Tuong tac GUI.py\"\n\nimport json\nimport time\nfrom pathlib import Path\n\n# Tự động kết nối VBrowserAI nếu chạy độc lập bên ngoài trình duyệt\ntry:\n    _web = web\nexcept NameError:\n    import sys\n    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))\n    from ai_client import VBrowserAI\n    _web = VBrowserAI()\n\n# Địa chỉ Proxy sống kiểm thử (thay bằng proxy của bạn nếu muốn)\nPROXY_URL = \"http://103.237.102.191:11111\"\n\nprint(\"==================================================\")\nprint(\"1. Dò GeoIP của Proxy:\", PROXY_URL)\nprint(\"==================================================\")\ntry:\n    geo = _web.resolve_geoip(proxy=PROXY_URL, apply=True, reload=True)\n    print(\"Kết quả GeoIP:\")\n    print(f\"  IP: {geo.get('ip')}\")\n    print(f\"  Quốc gia: {geo.get('country_code')}\")\n    print(f\"  Ngôn ngữ: {geo.get('locale')}\")\n    print(f\"  Múi giờ: {geo.get('timezone')}\")\nexcept Exception as e:\n    print(f\"Lưu ý khi tra GeoIP proxy: {e}\")\n    geo = {}\n\n# 2. Đặt Persona đồng bộ với proxy\nprint(\"\\n==================================================\")\nprint(\"2. Cập nhật Persona (Windows 10, RTX 3070 Ti, Noise Canvas/Audio)\")\nprint(\"==================================================\")\nloc = geo.get(\"locale\") or \"de-DE,de,en-US,en\"\ntz = geo.get(\"timezone\") or \"Europe/Berlin\"\nfp = _web.set_fingerprint(\n    seed=\"998877\",\n    platform=\"windows\",\n    anchor=\"windows-d3d11-nvidia-0947761dfbe9\",\n    locale=loc if \",\" in loc else f\"{loc},{loc[:2]}\",\n    timezone=tz,\n    noise=True,\n    reload=False,\n)\nprint(\"Cấu hình Persona hiện tại:\")\nprint(f\"  OS: {fp.get('platform')}\")\nprint(f\"  GPU: {fp.get('gpu_renderer')}\")\nprint(f\"  Locale: {fp.get('locale')}\")\nprint(f\"  Timezone: {fp.get('timezone')}\")\n\n# 3. Điều hướng cửa sổ GUI kiểm tra Headers thực tế\nprint(\"\\n==================================================\")\nprint(\"3. Kiểm tra Header gửi ra Internet (httpbin.org/headers)\")\nprint(\"==================================================\")\n_web.navigate(\"http://httpbin.org/headers\")\ntime.sleep(2)\nprint(\"Tiêu đề trang:\", _web.get_title())\nraw_text = _web.get_text() or \"\"\nprint(\"Nội dung Headers server nhận diện:\\n\", raw_text.strip())\n\n# 4. Tương tác trực tiếp trên Form nhập liệu\nprint(\"\\n==================================================\")\nprint(\"4. Tương tác DOM cửa sổ GUI (httpbin.org/forms/post)\")\nprint(\"==================================================\")\n_web.navigate(\"http://httpbin.org/forms/post\")\ntime.sleep(2)\n\nprint(\"Đang tự động nhập dữ liệu vào form...\")\n_web.type_text(\"input[name='custname']\", \"VBrowser Tester (Automation)\")\n_web.type_text(\"input[name='custtel']\", \"0987654321\")\n_web.type_text(\"input[name='custemail']\", \"proxy_tester@vbrowser.local\")\n_web.type_text(\"textarea[name='comments']\", \"Chạy từ Mẫu 15: Kiểm thử tương tác GUI & Proxy sống!\")\n\nprint(\"Cuộn trang xuống...\")\n_web.scroll(250)\n\n# 5. Chụp ảnh màn hình cửa sổ GUI\nprint(\"\\n==================================================\")\nprint(\"5. Chụp ảnh màn hình cửa sổ GUI\")\nprint(\"==================================================\")\nout_dir = Path(__file__).resolve().parent.parent / \"data\" / \"downloads\"\nout_dir.mkdir(parents=True, exist_ok=True)\nshot_file = out_dir / \"kiem_thu_proxy_gui.png\"\n_web.screenshot(full_page=False, save_to=str(shot_file))\nprint(\"Đã lưu ảnh chụp màn hình tại:\")\nprint(\" \", shot_file)\n\nprint(\"\\n>>> HOÀN THÀNH KIỂM THỬ TƯƠNG TÁC CỬA SỔ GUI & PROXY! <<<\")\n"
 };
 
+// Danh sách các dịch vụ lớn luôn chặn nhúng iframe bởi cờ X-Frame-Options / CSP frame-ancestors
+const IFRAME_BLOCKED_HOSTS = [
+  'google.com', 'google.com.vn', 'www.google.com',
+  'github.com', 'huggingface.co', 'openrouter.ai',
+  'build.nvidia.com', 'cloudflare.com', 'gemini.google.com',
+  'colab.research.google.com', 'facebook.com', 'youtube.com',
+  'twitter.com', 'x.com', 'instagram.com', 'linkedin.com'
+];
+
+// Phím tắt mở nhanh tên miền báo chí / công nghệ phổ biến
+const SHORTCUTS = {
+  'dantri': 'https://dantri.com.vn',
+  'vnexpress': 'https://vnexpress.net',
+  'tuoitre': 'https://tuoitre.vn',
+  'thanhnien': 'https://thanhnien.vn',
+  'genk': 'https://genk.vn',
+  'tinhte': 'https://tinhte.vn',
+  '24h': 'https://24h.com.vn',
+  'vietnamnet': 'https://vietnamnet.vn',
+  'znews': 'https://znews.vn',
+  'zing': 'https://znews.vn',
+  'wiki': 'https://vi.wikipedia.org'
+};
+
 // State của trình duyệt
 const state = {
   tabs: [
@@ -51,6 +75,7 @@ const state = {
 // DOM Elements
 const tabsList = document.getElementById('tabsList');
 const btnNewTab = document.getElementById('btnNewTab');
+const modeSelect = document.getElementById('modeSelect');
 const urlInput = document.getElementById('urlInput');
 const btnClearUrl = document.getElementById('btnClearUrl');
 const btnBack = document.getElementById('btnBack');
@@ -66,6 +91,23 @@ const newtabSearchForm = document.getElementById('newtabSearchForm');
 const newtabSearchInput = document.getElementById('newtabSearchInput');
 const webFrameContainer = document.getElementById('webFrameContainer');
 const webIframe = document.getElementById('webIframe');
+
+// Smart Fallback Elements
+const smartFallback = document.getElementById('smartFallback');
+const fallbackTitle = document.getElementById('fallbackTitle');
+const fallbackDesc = document.getElementById('fallbackDesc');
+const btnFallbackExternal = document.getElementById('btnFallbackExternal');
+const btnFallbackCloud = document.getElementById('btnFallbackCloud');
+const btnFallbackProxy = document.getElementById('btnFallbackProxy');
+
+// Cloud Viewport Elements
+const cloudViewport = document.getElementById('cloudViewport');
+const cloudTitleText = document.getElementById('cloudTitleText');
+const btnCloudSnapshot = document.getElementById('btnCloudSnapshot');
+const btnCloudOpenTab = document.getElementById('btnCloudOpenTab');
+const cloudImg = document.getElementById('cloudImg');
+const cloudLoading = document.getElementById('cloudLoading');
+const cloudLoadingText = document.getElementById('cloudLoadingText');
 
 // Action buttons
 const btnActionAdd = document.getElementById('btnActionAdd');
@@ -134,19 +176,16 @@ function renderTabs() {
     el.className = `browser-tab ${tab.pinned ? 'pinned' : ''} ${tab.id === state.activeTabId ? 'active' : ''}`;
     el.title = tab.title + (tab.url ? ` (${tab.url})` : '');
     
-    // Icon
     const iconSpan = document.createElement('span');
     iconSpan.className = 'tab-icon';
     iconSpan.textContent = tab.icon || (tab.pinned ? '📌' : '📄');
     el.appendChild(iconSpan);
 
-    // Title
     const titleSpan = document.createElement('span');
     titleSpan.className = 'tab-title';
     titleSpan.textContent = tab.title;
     el.appendChild(titleSpan);
 
-    // Close button (chỉ hiện với tab không ghim)
     if (!tab.pinned) {
       const closeBtn = document.createElement('span');
       closeBtn.className = 'tab-close';
@@ -173,15 +212,14 @@ function switchTab(id) {
   if (target.isNewTab || !target.url) {
     newtabPage.style.display = 'flex';
     webFrameContainer.style.display = 'none';
+    smartFallback.style.display = 'none';
+    cloudViewport.style.display = 'none';
     urlInput.value = '';
     urlInput.placeholder = 'Nhập địa chỉ hoặc từ khóa tìm kiếm…';
     newtabSearchInput.value = '';
     setTimeout(() => newtabSearchInput.focus(), 50);
   } else {
-    newtabPage.style.display = 'none';
-    webFrameContainer.style.display = 'block';
-    urlInput.value = target.url;
-    navigateIframe(target.url);
+    navigatePage(target.url);
   }
 }
 
@@ -213,22 +251,39 @@ function createNewTab(url = '', title = 'Trang mới', isPinned = false) {
 btnNewTab.addEventListener('click', () => createNewTab());
 btnActionAdd.addEventListener('click', () => createNewTab());
 
-// --- 3. ĐIỀU HƯỚNG URL & TÌM KIẾM ---
+// --- 3. ĐIỀU HƯỚNG URL & THÔNG MINH ---
+function isBlockedHost(url) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    return IFRAME_BLOCKED_HOSTS.some(h => host === h || host.endsWith('.' + h));
+  } catch {
+    return false;
+  }
+}
+
 function resolveSearchOrUrl(raw) {
   const text = raw.trim();
   if (!text) return '';
-  if (/^https?:\/\//i.test(text)) {
-    return text;
+  if (/^https?:\/\//i.test(text)) return text;
+  if (text.includes('.') && !text.includes(' ')) return 'https://' + text;
+
+  // Nhận diện phím tắt mở trực tiếp báo chí / trang tin
+  const lower = text.toLowerCase();
+  if (SHORTCUTS[lower]) {
+    return SHORTCUTS[lower];
   }
-  // Nếu có dấu chấm và không chứa khoảng trắng: coi là tên miền
-  if (text.includes('.') && !text.includes(' ')) {
-    return 'https://' + text;
-  }
-  // Ngược lại tìm kiếm trên Google
+
+  // Mặc định là từ khóa tìm kiếm Google
   return 'https://www.google.com/search?q=' + encodeURIComponent(text);
 }
 
-function navigateIframe(url) {
+function finishLoading() {
+  loadingBar.style.width = '100%';
+  setTimeout(() => { loadingBar.style.width = '0%'; }, 350);
+}
+
+function navigatePage(url) {
   loadingBar.style.width = '30%';
   setTimeout(() => { loadingBar.style.width = '70%'; }, 200);
 
@@ -244,26 +299,126 @@ function navigateIframe(url) {
     activeTab.isNewTab = false;
     renderTabs();
   }
+  urlInput.value = url;
 
-  webIframe.src = url;
-  
-  webIframe.onload = () => {
-    loadingBar.style.width = '100%';
-    setTimeout(() => { loadingBar.style.width = '0%'; }, 300);
-  };
-  webIframe.onerror = () => {
-    loadingBar.style.width = '0%';
-  };
+  // Ẩn tất cả viewports trước
+  newtabPage.style.display = 'none';
+  webFrameContainer.style.display = 'none';
+  smartFallback.style.display = 'none';
+  cloudViewport.style.display = 'none';
+
+  const mode = modeSelect ? modeSelect.value : 'direct';
+
+  if (mode === 'cloud') {
+    openInCloud(url);
+    finishLoading();
+    return;
+  }
+
+  if (mode === 'proxy') {
+    openInProxy(url);
+    finishLoading();
+    return;
+  }
+
+  // Chế độ Direct: kiểm tra xem host có chặn iframe không
+  if (isBlockedHost(url)) {
+    showFallback(url);
+    finishLoading();
+  } else {
+    webFrameContainer.style.display = 'block';
+    webIframe.src = url;
+    finishLoading();
+  }
+}
+
+function showFallback(url) {
+  let host = url;
+  try { host = new URL(url).hostname; } catch(e){}
+  fallbackTitle.textContent = `Trang web bảo mật cao: ${host}`;
+  fallbackDesc.innerHTML = `Trang web này từ chối nhúng trực tiếp trong khung trang bởi chính sách bảo mật toàn cầu <code>X-Frame-Options: SAMEORIGIN</code> của ${host}.`;
+  smartFallback.style.display = 'flex';
+}
+
+function openInProxy(url) {
+  webFrameContainer.style.display = 'block';
+  // Chạy qua CORS Proxy bóc tách cờ X-Frame-Options
+  webIframe.src = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+}
+
+async function openInCloud(url) {
+  cloudViewport.style.display = 'flex';
+  cloudImg.style.display = 'none';
+  cloudLoading.style.display = 'flex';
+  cloudLoadingText.innerHTML = `Đang gửi lệnh tới Chromium Cloud ZeroGPU (${state.backend.hfUrl})...<br><span style="font-size:12px; color:#10b981;">Nvidia RTX Pro 6000 Blackwell</span>`;
+
+  try {
+    const apiUrl = `${state.backend.hfUrl}/api/predict`;
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fn_index: 0, data: [url] })
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.data && data.data[0]) {
+        cloudImg.src = data.data[0];
+        cloudImg.style.display = 'block';
+        cloudLoading.style.display = 'none';
+        return;
+      }
+    }
+    throw new Error('Chờ xác thực Space');
+  } catch (err) {
+    cloudLoadingText.innerHTML = `
+      Chromium Cloud ZeroGPU đang chạy trên Space:
+      <br><br>
+      <a href="${state.backend.hfUrl}" target="_blank" style="color:#10b981; text-decoration:underline; font-weight:bold; font-size:14px;">
+        ${state.backend.hfUrl}
+      </a>
+      <br><br>
+      <button class="btn-fallback-primary" onclick="window.open('${url}', '_blank')">🌐 Mở trang này ra Tab mới</button>
+    `;
+  }
+}
+
+// Fallback Action Buttons
+btnFallbackExternal.addEventListener('click', () => {
+  const url = urlInput.value;
+  if (url) window.open(url, '_blank');
+});
+
+btnFallbackCloud.addEventListener('click', () => {
+  if (modeSelect) modeSelect.value = 'cloud';
+  navigatePage(urlInput.value);
+});
+
+btnFallbackProxy.addEventListener('click', () => {
+  if (modeSelect) modeSelect.value = 'proxy';
+  navigatePage(urlInput.value);
+});
+
+btnCloudSnapshot.addEventListener('click', () => {
+  openInCloud(urlInput.value);
+});
+
+btnCloudOpenTab.addEventListener('click', () => {
+  if (urlInput.value) window.open(urlInput.value, '_blank');
+});
+
+if (modeSelect) {
+  modeSelect.addEventListener('change', () => {
+    if (urlInput.value) {
+      navigatePage(urlInput.value);
+    }
+  });
 }
 
 function handleNavigation(inputVal) {
   const targetUrl = resolveSearchOrUrl(inputVal);
   if (!targetUrl) return;
-
-  newtabPage.style.display = 'none';
-  webFrameContainer.style.display = 'block';
-  urlInput.value = targetUrl;
-  navigateIframe(targetUrl);
+  navigatePage(targetUrl);
 }
 
 urlInput.addEventListener('keydown', (e) => {
@@ -293,8 +448,8 @@ btnHome.addEventListener('click', () => {
 });
 
 btnReload.addEventListener('click', () => {
-  if (webIframe.src && webIframe.src !== 'about:blank') {
-    webIframe.src = webIframe.src;
+  if (urlInput.value) {
+    navigatePage(urlInput.value);
   }
 });
 
@@ -372,7 +527,7 @@ btnNewScript.addEventListener('click', () => {
   const newName = '99_Tap_lenh_tuy_chinh_' + Math.floor(Math.random() * 900 + 100);
   TEMPLATES[newName] = {
     desc: 'Tập lệnh tự định nghĩa bởi người dùng',
-    code: `# Tập lệnh tùy chỉnh: ${newName}\nimport json\n\nprint("Xin chào từ VBrowser Python Runner!")\n`
+    code: `# Tập lệnh tùy chỉnh: ${newName}\nimport json\n\nprint("Xin chào từ VSBrowser Python Runner!")\n`
   };
   openScriptEditor(newName);
 });
@@ -381,10 +536,10 @@ btnNewScript.addEventListener('click', () => {
 btnRunScript.addEventListener('click', async () => {
   const key = state.currentScriptKey || 'script';
   const code = scriptCodeArea.value;
-  scriptConsoleOutput.textContent = `[⏳ Đang chạy ${key} qua VBrowser Engine...]\n`;
+  scriptConsoleOutput.textContent = `[⏳ Đang chạy ${key} qua VSBrowser Engine...]\n`;
 
   try {
-    const targetUrl = urlInput.value || 'https://google.com';
+    const targetUrl = urlInput.value || 'https://dantri.com.vn';
     await new Promise(r => setTimeout(r, 600));
 
     let simulatedResult = '';
@@ -392,7 +547,7 @@ btnRunScript.addEventListener('click', async () => {
       simulatedResult = JSON.stringify({
         status: 'SUCCESS',
         url: targetUrl,
-        title: 'VBrowser – Nền tảng Chromium Portable',
+        title: 'VSBrowser – Nền tảng Chromium Portable',
         main_content: 'Đã trích xuất 1,420 ký tự văn bản sạch sẽ cho AI Agent xử lý.',
         word_count: 268
       }, null, 2);
@@ -492,7 +647,7 @@ btnSaveBackend.addEventListener('click', () => {
 
 // --- 7. TẢI XUỐNG & GIAO DIỆN (DOWNLOADS & THEME) ---
 btnActionDownloads.addEventListener('click', () => {
-  alert('📁 Thư mục tải xuống: Downloads/VBrowser_Files (Chưa có tệp tải xuống mới)');
+  alert('📁 Thư mục tải xuống: Downloads/VSBrowser_Files (Chưa có tệp tải xuống mới)');
 });
 
 let isAlternateTheme = false;
@@ -511,7 +666,7 @@ btnActionTheme.addEventListener('click', () => {
 
 // Window controls demo
 document.querySelector('.win-min').addEventListener('click', () => {
-  alert('Thu nhỏ cửa sổ VBrowser');
+  alert('Thu nhỏ cửa sổ VSBrowser');
 });
 document.querySelector('.win-max').addEventListener('click', () => {
   if (!document.fullscreenElement) {
@@ -521,7 +676,7 @@ document.querySelector('.win-max').addEventListener('click', () => {
   }
 });
 document.querySelector('.win-close').addEventListener('click', () => {
-  if (confirm('Bạn có muốn đóng phiên làm việc VBrowser không?')) {
+  if (confirm('Bạn có muốn đóng phiên làm việc VSBrowser không?')) {
     window.close();
   }
 });

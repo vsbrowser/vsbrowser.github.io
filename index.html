@@ -48,6 +48,11 @@
       <!-- Ô nhập địa chỉ URL thông minh -->
       <div class="url-bar-container">
         <span class="security-badge" id="secBadge" title="Bảo mật kết nối">🔒</span>
+        <select id="modeSelect" class="mode-select" title="Chế độ nạp trang">
+          <option value="direct">🌐 Trực tiếp</option>
+          <option value="proxy">⚡ Proxy Vượt Tường</option>
+          <option value="cloud">☁️ Cloud ZeroGPU</option>
+        </select>
         <input type="text" id="urlInput" class="url-input" placeholder="Nhập địa chỉ hoặc từ khóa tìm kiếm…" autocomplete="off" spellcheck="false">
         <button class="clear-url-btn" id="btnClearUrl" title="Xóa">✕</button>
       </div>
@@ -90,6 +95,42 @@
       <!-- Khung hiển thị nội dung Web khi điều hướng -->
       <div class="web-content-frame" id="webFrameContainer" style="display:none;">
         <iframe id="webIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="about:blank"></iframe>
+      </div>
+
+      <!-- Khung cảnh báo thông minh khi gặp trang chặn X-Frame-Options (tránh lỗi refused to connect của Chrome) -->
+      <div class="smart-fallback-card" id="smartFallback" style="display:none;">
+        <div class="fallback-icon">🛡️</div>
+        <h3 id="fallbackTitle">Trang web bảo mật cao: www.google.com</h3>
+        <p id="fallbackDesc">
+          Trang web này từ chối nhúng trực tiếp trong khung trang bởi chính sách bảo mật toàn cầu <code>X-Frame-Options: SAMEORIGIN</code> của Google/GitHub.
+        </p>
+        <div class="fallback-buttons">
+          <button class="btn-fallback-primary" id="btnFallbackExternal">🌐 Mở Tab Thật (Khuyên dùng)</button>
+          <button class="btn-fallback-secondary" id="btnFallbackCloud">☁️ Stream qua Cloud ZeroGPU</button>
+          <button class="btn-fallback-secondary" id="btnFallbackProxy">⚡ Thử qua Proxy Vượt Tường</button>
+        </div>
+        <div class="fallback-footer">
+          <span>💡 Bạn có thể đổi chế độ tải mặc định ở ô <b>[🌐 Trực tiếp ▾]</b> trên thanh địa chỉ.</span>
+        </div>
+      </div>
+
+      <!-- Khung hiển thị Cloud Stream từ Chromium trên Hugging Face Space -->
+      <div class="cloud-viewport-container" id="cloudViewport" style="display:none;">
+        <div class="cloud-control-bar">
+          <span class="cloud-status-dot"></span>
+          <span class="cloud-title" id="cloudTitleText">Cloud ZeroGPU (Nvidia RTX Pro 6000 Blackwell)</span>
+          <div class="cloud-actions">
+            <button class="cloud-btn" id="btnCloudSnapshot" title="Chụp lại màn hình">🔄 Chụp lại</button>
+            <button class="cloud-btn" id="btnCloudOpenTab" title="Mở trang hiện tại ra tab riêng">🌐 Mở tab thật</button>
+          </div>
+        </div>
+        <div class="cloud-screen-wrapper">
+          <img id="cloudImg" alt="Màn hình Chromium Cloud" style="display:none;">
+          <div class="cloud-loading-overlay" id="cloudLoading">
+            <div class="loader-spinner"></div>
+            <p id="cloudLoadingText">Đang tải Chromium Cloud ZeroGPU...</p>
+          </div>
+        </div>
       </div>
 
       <!-- Thanh trạng thái tải trang -->
